@@ -1,0 +1,923 @@
+Running [ MIGraphX Version: 2.10.0.f513f2519 ]: /src/AMDMIGraphX/build/bin/driver perf --fill1 input_ids --input-dim @input_ids 16 384 --batch 16 --gpu /new-saved-models/distilgpt2/distilgpt2_1_fp16_gpu.onnx
+Compiling ... 
+Reading: /new-saved-models/distilgpt2/distilgpt2_1_fp16_gpu.onnx
+module: "main"
+@0 = check_context::migraphx::gpu::context -> float_type, {}, {}, target_id=0
+@1 = hip::hip_allocate_memory[shape=int8_type, {160432128}, {1},id=main:scratch] -> int8_type, {160432128}, {1}, target_id=0
+@2 = hip::hip_copy_literal[id=main:@literal:8] -> half_type, {1, 384, 768}, {294912, 768, 1}, target_id=0
+@3 = load[offset=0,end=24576](@1) -> float_type, {16, 384}, {384, 1}, target_id=0
+input_ids = @param:input_ids -> int64_type, {16, 384}, {384, 1}, target_id=0
+@5 = gpu::code_object[code_object=4000,symbol_name=convert_kernel,global=3072,local=1024,](input_ids,@3) -> float_type, {16, 384}, {384, 1}, target_id=0
+@6 = hip::hip_copy_literal[id=main:@literal:76] -> half_type, {50257, 768}, {768, 1}, target_id=0
+@7 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@8 = gpu::code_object[code_object=4104,symbol_name=gather_kernel,global=307200,local=1024,](@6,@5,@7) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@9 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@10 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@2) -> half_type, {16, 384, 768}, {0, 768, 1}, target_id=0
+@11 = gpu::code_object[code_object=3976,symbol_name=add_kernel,global=589824,local=1024,](@8,@10,@9) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@12 = hip::hip_copy_literal[id=main:@literal:6] -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@13 = hip::hip_copy_literal[id=main:@literal:74] -> half_type, {768}, {1}, target_id=0
+@14 = hip::hip_copy_literal[id=main:@literal:75] -> half_type, {768}, {1}, target_id=0
+@15 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@16 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@13) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@17 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@14) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@18 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@11,@17,@16,@15) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@19 = hip::hip_copy_literal[id=main:@literal:73] -> half_type, {768, 2304}, {2304, 1}, target_id=0
+@20 = reshape_lazy[dims={-1, 768}](@18) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@21 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@22 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@20,@19,@12,@21) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@23 = reshape_lazy[dims={16, 384, 3, 12, 64}](@22) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0
+@24 = transpose[permutation={2, 0, 3, 1, 4}](@23) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@25 = slice[axes={0},starts={0},ends={1}](@24) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@26 = load[offset=103809024,end=113246208](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@27 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@25,@26) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@28 = slice[axes={0},starts={1},ends={2}](@24) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@29 = load[offset=94371840,end=103809024](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@30 = squeeze[axes={0}](@28) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0
+@31 = transpose[permutation={0, 1, 3, 2}](@30) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0
+@32 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@31,@29) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@33 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@34 = reshape_lazy[dims={16, 12, 384, 64}](@27) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@35 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@34,@32,@33) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@36 = hip::hip_copy_literal[id=main:@literal:7] -> bool_type, {1, 1, 384, 384}, {147456, 147456, 384, 1}, target_id=0
+@37 = slice[axes={0},starts={2},ends={3}](@24) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@38 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@39 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@37,@38) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@40 = multibroadcast[out_lens={16, 12, 384, 384},out_dyn_dims={}](@36) -> bool_type, {16, 12, 384, 384}, {0, 0, 384, 1}, target_id=0
+@41 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@42 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@35,@40,@41) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@43 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@44 = reshape_lazy[dims={16, 12, 384, 64}](@39) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@45 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@42,@44,@43) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@46 = transpose[permutation={0, 2, 1, 3}](@45) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0
+@47 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@48 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@46,@47) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@49 = hip::hip_copy_literal[id=main:@literal:72] -> half_type, {768, 768}, {768, 1}, target_id=0
+@50 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@51 = reshape_lazy[dims={6144, 768}](@48) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@52 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@51,@49,@50) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@53 = hip::hip_copy_literal[id=main:@literal:71] -> half_type, {768}, {1}, target_id=0
+@54 = reshape_lazy[dims={16, 384, 768}](@52) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@55 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@53) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@56 = reshape_lazy[dims={16, 384, 768}](@55) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@57 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@58 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@54,@56,@11,@57) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@59 = hip::hip_copy_literal[id=main:@literal:69] -> half_type, {768}, {1}, target_id=0
+@60 = hip::hip_copy_literal[id=main:@literal:70] -> half_type, {768}, {1}, target_id=0
+@61 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@59) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@62 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@60) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@63 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@64 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@58,@62,@61,@63) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@65 = hip::hip_copy_literal[id=main:@literal:68] -> half_type, {768, 3072}, {3072, 1}, target_id=0
+@66 = reshape_lazy[dims={-1, 768}](@64) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@67 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@68 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@66,@65,@67) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@69 = hip::hip_copy_literal[id=main:@literal:67] -> half_type, {3072}, {1}, target_id=0
+@70 = reshape_lazy[dims={16, 384, 3072}](@68) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@71 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@69) -> half_type, {6144, 3072}, {0, 1}, target_id=0
+@72 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@73 = reshape_lazy[dims={16, 384, 3072}](@71) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0
+@74 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@70,@73,@72) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@75 = hip::hip_copy_literal[id=main:@literal:66] -> half_type, {3072, 768}, {768, 1}, target_id=0
+@76 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@77 = reshape_lazy[dims={-1, 3072}](@74) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@78 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@77,@75,@76) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@79 = hip::hip_copy_literal[id=main:@literal:65] -> half_type, {768}, {1}, target_id=0
+@80 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@79) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@81 = reshape_lazy[dims={16, 384, 768}](@78) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@82 = load[offset=150994944,end=160432128](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@83 = reshape_lazy[dims={16, 384, 768}](@80) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@84 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@81,@83,@58,@82) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@85 = hip::hip_copy_literal[id=main:@literal:5] -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@86 = hip::hip_copy_literal[id=main:@literal:63] -> half_type, {768}, {1}, target_id=0
+@87 = hip::hip_copy_literal[id=main:@literal:64] -> half_type, {768}, {1}, target_id=0
+@88 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@86) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@89 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@87) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@90 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@91 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@84,@89,@88,@90) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@92 = hip::hip_copy_literal[id=main:@literal:62] -> half_type, {768, 2304}, {2304, 1}, target_id=0
+@93 = load[offset=0,end=28311552](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@94 = reshape_lazy[dims={-1, 768}](@91) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@95 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@94,@92,@85,@93) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@96 = reshape_lazy[dims={16, 384, 3, 12, 64}](@95) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0
+@97 = transpose[permutation={2, 0, 3, 1, 4}](@96) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@98 = slice[axes={0},starts={0},ends={1}](@97) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@99 = load[offset=37748736,end=47185920](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@100 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@98,@99) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@101 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@102 = slice[axes={0},starts={1},ends={2}](@97) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@103 = squeeze[axes={0}](@102) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0
+@104 = transpose[permutation={0, 1, 3, 2}](@103) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0
+@105 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@104,@101) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@106 = reshape_lazy[dims={16, 12, 384, 64}](@100) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@107 = load[offset=94371840,end=150994944](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@108 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@106,@105,@107) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@109 = load[offset=37748736,end=94371840](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@110 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@108,@40,@109) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@111 = slice[axes={0},starts={2},ends={3}](@97) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@112 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@113 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@111,@112) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@114 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@115 = reshape_lazy[dims={16, 12, 384, 64}](@113) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@116 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@110,@115,@114) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@117 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@118 = transpose[permutation={0, 2, 1, 3}](@116) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0
+@119 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@118,@117) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@120 = hip::hip_copy_literal[id=main:@literal:61] -> half_type, {768, 768}, {768, 1}, target_id=0
+@121 = reshape_lazy[dims={6144, 768}](@119) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@122 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@123 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@121,@120,@122) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@124 = hip::hip_copy_literal[id=main:@literal:60] -> half_type, {768}, {1}, target_id=0
+@125 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@124) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@126 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@127 = reshape_lazy[dims={16, 384, 768}](@123) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@128 = reshape_lazy[dims={16, 384, 768}](@125) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@129 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@127,@128,@84,@126) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@130 = hip::hip_copy_literal[id=main:@literal:58] -> half_type, {768}, {1}, target_id=0
+@131 = hip::hip_copy_literal[id=main:@literal:59] -> half_type, {768}, {1}, target_id=0
+@132 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@133 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@130) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@134 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@131) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@135 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@129,@134,@133,@132) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@136 = hip::hip_copy_literal[id=main:@literal:57] -> half_type, {768, 3072}, {3072, 1}, target_id=0
+@137 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@138 = reshape_lazy[dims={-1, 768}](@135) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@139 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@138,@136,@137) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@140 = hip::hip_copy_literal[id=main:@literal:56] -> half_type, {3072}, {1}, target_id=0
+@141 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@140) -> half_type, {6144, 3072}, {0, 1}, target_id=0
+@142 = reshape_lazy[dims={16, 384, 3072}](@139) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@143 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@144 = reshape_lazy[dims={16, 384, 3072}](@141) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0
+@145 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@142,@144,@143) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@146 = hip::hip_copy_literal[id=main:@literal:55] -> half_type, {3072, 768}, {768, 1}, target_id=0
+@147 = reshape_lazy[dims={-1, 3072}](@145) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@148 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@149 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@147,@146,@148) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@150 = hip::hip_copy_literal[id=main:@literal:54] -> half_type, {768}, {1}, target_id=0
+@151 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@150) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@152 = reshape_lazy[dims={16, 384, 768}](@151) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@153 = reshape_lazy[dims={16, 384, 768}](@149) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@154 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@155 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@153,@152,@129,@154) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@156 = hip::hip_copy_literal[id=main:@literal:4] -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@157 = hip::hip_copy_literal[id=main:@literal:52] -> half_type, {768}, {1}, target_id=0
+@158 = hip::hip_copy_literal[id=main:@literal:53] -> half_type, {768}, {1}, target_id=0
+@159 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@160 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@157) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@161 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@158) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@162 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@155,@161,@160,@159) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@163 = hip::hip_copy_literal[id=main:@literal:51] -> half_type, {768, 2304}, {2304, 1}, target_id=0
+@164 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@165 = reshape_lazy[dims={-1, 768}](@162) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@166 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@165,@163,@156,@164) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@167 = reshape_lazy[dims={16, 384, 3, 12, 64}](@166) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0
+@168 = transpose[permutation={2, 0, 3, 1, 4}](@167) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@169 = slice[axes={0},starts={1},ends={2}](@168) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@170 = squeeze[axes={0}](@169) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0
+@171 = transpose[permutation={0, 1, 3, 2}](@170) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0
+@172 = load[offset=103809024,end=113246208](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@173 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@171,@172) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@174 = slice[axes={0},starts={0},ends={1}](@168) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@175 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@176 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@174,@175) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@177 = reshape_lazy[dims={16, 12, 384, 64}](@176) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@178 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@179 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@177,@173,@178) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@180 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@181 = slice[axes={0},starts={2},ends={3}](@168) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@182 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@181,@180) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@183 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@184 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@179,@40,@183) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@185 = reshape_lazy[dims={16, 12, 384, 64}](@182) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@186 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@187 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@184,@185,@186) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@188 = transpose[permutation={0, 2, 1, 3}](@187) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0
+@189 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@190 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@188,@189) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@191 = hip::hip_copy_literal[id=main:@literal:50] -> half_type, {768, 768}, {768, 1}, target_id=0
+@192 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@193 = reshape_lazy[dims={6144, 768}](@190) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@194 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@193,@191,@192) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@195 = hip::hip_copy_literal[id=main:@literal:49] -> half_type, {768}, {1}, target_id=0
+@196 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@195) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@197 = reshape_lazy[dims={16, 384, 768}](@194) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@198 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@199 = reshape_lazy[dims={16, 384, 768}](@196) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@200 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@197,@199,@155,@198) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@201 = hip::hip_copy_literal[id=main:@literal:47] -> half_type, {768}, {1}, target_id=0
+@202 = hip::hip_copy_literal[id=main:@literal:48] -> half_type, {768}, {1}, target_id=0
+@203 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@201) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@204 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@202) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@205 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@206 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@200,@204,@203,@205) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@207 = hip::hip_copy_literal[id=main:@literal:46] -> half_type, {768, 3072}, {3072, 1}, target_id=0
+@208 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@209 = reshape_lazy[dims={-1, 768}](@206) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@210 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@209,@207,@208) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@211 = hip::hip_copy_literal[id=main:@literal:45] -> half_type, {3072}, {1}, target_id=0
+@212 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@211) -> half_type, {6144, 3072}, {0, 1}, target_id=0
+@213 = reshape_lazy[dims={16, 384, 3072}](@212) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0
+@214 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@215 = reshape_lazy[dims={16, 384, 3072}](@210) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@216 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@215,@213,@214) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@217 = hip::hip_copy_literal[id=main:@literal:44] -> half_type, {3072, 768}, {768, 1}, target_id=0
+@218 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@219 = reshape_lazy[dims={-1, 3072}](@216) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@220 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@219,@217,@218) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@221 = hip::hip_copy_literal[id=main:@literal:43] -> half_type, {768}, {1}, target_id=0
+@222 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@223 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@221) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@224 = reshape_lazy[dims={16, 384, 768}](@223) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@225 = reshape_lazy[dims={16, 384, 768}](@220) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@226 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@225,@224,@200,@222) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@227 = hip::hip_copy_literal[id=main:@literal:41] -> half_type, {768}, {1}, target_id=0
+@228 = hip::hip_copy_literal[id=main:@literal:42] -> half_type, {768}, {1}, target_id=0
+@229 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@230 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@227) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@231 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@228) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@232 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@226,@231,@230,@229) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@233 = hip::hip_copy_literal[id=main:@literal:3] -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@234 = hip::hip_copy_literal[id=main:@literal:40] -> half_type, {768, 2304}, {2304, 1}, target_id=0
+@235 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@236 = reshape_lazy[dims={-1, 768}](@232) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@237 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@236,@234,@233,@235) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@238 = hip::hip_copy_literal[id=main:@literal:38] -> half_type, {768}, {1}, target_id=0
+@239 = reshape_lazy[dims={16, 384, 3, 12, 64}](@237) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0
+@240 = load[offset=103809024,end=113246208](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@241 = transpose[permutation={2, 0, 3, 1, 4}](@239) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@242 = slice[axes={0},starts={0},ends={1}](@241) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@243 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@242,@240) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@244 = slice[axes={0},starts={1},ends={2}](@241) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@245 = load[offset=94371840,end=103809024](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@246 = squeeze[axes={0}](@244) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0
+@247 = transpose[permutation={0, 1, 3, 2}](@246) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0
+@248 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@247,@245) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@249 = reshape_lazy[dims={16, 12, 384, 64}](@243) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@250 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@251 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@249,@248,@250) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@252 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@253 = slice[axes={0},starts={2},ends={3}](@241) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@254 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@253,@252) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@255 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@256 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@251,@40,@255) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@257 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@258 = reshape_lazy[dims={16, 12, 384, 64}](@254) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@259 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@256,@258,@257) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@260 = hip::hip_copy_literal[id=main:@literal:39] -> half_type, {768, 768}, {768, 1}, target_id=0
+@261 = transpose[permutation={0, 2, 1, 3}](@259) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0
+@262 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@263 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@261,@262) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@264 = reshape_lazy[dims={6144, 768}](@263) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@265 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@266 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@264,@260,@265) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@267 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@238) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@268 = reshape_lazy[dims={16, 384, 768}](@267) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@269 = reshape_lazy[dims={16, 384, 768}](@266) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@270 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@271 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@269,@268,@226,@270) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@272 = hip::hip_copy_literal[id=main:@literal:35] -> half_type, {768, 3072}, {3072, 1}, target_id=0
+@273 = hip::hip_copy_literal[id=main:@literal:36] -> half_type, {768}, {1}, target_id=0
+@274 = hip::hip_copy_literal[id=main:@literal:37] -> half_type, {768}, {1}, target_id=0
+@275 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@273) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@276 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@274) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@277 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@278 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@271,@276,@275,@277) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@279 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@280 = reshape_lazy[dims={-1, 768}](@278) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@281 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@280,@272,@279) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@282 = hip::hip_copy_literal[id=main:@literal:33] -> half_type, {3072, 768}, {768, 1}, target_id=0
+@283 = hip::hip_copy_literal[id=main:@literal:34] -> half_type, {3072}, {1}, target_id=0
+@284 = reshape_lazy[dims={16, 384, 3072}](@281) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@285 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@283) -> half_type, {6144, 3072}, {0, 1}, target_id=0
+@286 = reshape_lazy[dims={16, 384, 3072}](@285) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0
+@287 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@288 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@284,@286,@287) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@289 = reshape_lazy[dims={-1, 3072}](@288) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@290 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@291 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@289,@282,@290) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@292 = hip::hip_copy_literal[id=main:@literal:32] -> half_type, {768}, {1}, target_id=0
+@293 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@292) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@294 = reshape_lazy[dims={16, 384, 768}](@293) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@295 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@296 = reshape_lazy[dims={16, 384, 768}](@291) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@297 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@296,@294,@271,@295) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@298 = hip::hip_copy_literal[id=main:@literal:27] -> half_type, {768}, {1}, target_id=0
+@299 = hip::hip_copy_literal[id=main:@literal:2] -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@300 = hip::hip_copy_literal[id=main:@literal:29] -> half_type, {768, 2304}, {2304, 1}, target_id=0
+@301 = hip::hip_copy_literal[id=main:@literal:30] -> half_type, {768}, {1}, target_id=0
+@302 = hip::hip_copy_literal[id=main:@literal:31] -> half_type, {768}, {1}, target_id=0
+@303 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@301) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@304 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@302) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@305 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@306 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@297,@304,@303,@305) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@307 = reshape_lazy[dims={-1, 768}](@306) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@308 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@309 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@307,@300,@299,@308) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@310 = reshape_lazy[dims={16, 384, 3, 12, 64}](@309) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0
+@311 = load[offset=103809024,end=113246208](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@312 = transpose[permutation={2, 0, 3, 1, 4}](@310) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@313 = slice[axes={0},starts={0},ends={1}](@312) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@314 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@313,@311) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@315 = load[offset=94371840,end=103809024](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@316 = slice[axes={0},starts={1},ends={2}](@312) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@317 = squeeze[axes={0}](@316) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0
+@318 = transpose[permutation={0, 1, 3, 2}](@317) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0
+@319 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@318,@315) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@320 = reshape_lazy[dims={16, 12, 384, 64}](@314) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@321 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@322 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@320,@319,@321) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@323 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@324 = slice[axes={0},starts={2},ends={3}](@312) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@325 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@324,@323) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@326 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@327 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@322,@40,@326) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@328 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@329 = reshape_lazy[dims={16, 12, 384, 64}](@325) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@330 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@327,@329,@328) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@331 = hip::hip_copy_literal[id=main:@literal:28] -> half_type, {768, 768}, {768, 1}, target_id=0
+@332 = transpose[permutation={0, 2, 1, 3}](@330) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0
+@333 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@334 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@332,@333) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@335 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@336 = reshape_lazy[dims={6144, 768}](@334) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@337 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@336,@331,@335) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@338 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@339 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@298) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@340 = reshape_lazy[dims={16, 384, 768}](@339) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@341 = reshape_lazy[dims={16, 384, 768}](@337) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@342 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@341,@340,@297,@338) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@343 = hip::hip_copy_literal[id=main:@literal:24] -> half_type, {768, 3072}, {3072, 1}, target_id=0
+@344 = hip::hip_copy_literal[id=main:@literal:25] -> half_type, {768}, {1}, target_id=0
+@345 = hip::hip_copy_literal[id=main:@literal:26] -> half_type, {768}, {1}, target_id=0
+@346 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@344) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@347 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@345) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@348 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@349 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@342,@347,@346,@348) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@350 = reshape_lazy[dims={-1, 768}](@349) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@351 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@352 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@350,@343,@351) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@353 = hip::hip_copy_literal[id=main:@literal:22] -> half_type, {3072, 768}, {768, 1}, target_id=0
+@354 = hip::hip_copy_literal[id=main:@literal:23] -> half_type, {3072}, {1}, target_id=0
+@355 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@354) -> half_type, {6144, 3072}, {0, 1}, target_id=0
+@356 = reshape_lazy[dims={16, 384, 3072}](@352) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@357 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@358 = reshape_lazy[dims={16, 384, 3072}](@355) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0
+@359 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@356,@358,@357) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@360 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@361 = reshape_lazy[dims={-1, 3072}](@359) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@362 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@361,@353,@360) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@363 = hip::hip_copy_literal[id=main:@literal:21] -> half_type, {768}, {1}, target_id=0
+@364 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@363) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@365 = reshape_lazy[dims={16, 384, 768}](@364) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@366 = reshape_lazy[dims={16, 384, 768}](@362) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@367 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@368 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@366,@365,@342,@367) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@369 = hip::hip_copy_literal[id=main:@literal:16] -> half_type, {768}, {1}, target_id=0
+@370 = hip::hip_copy_literal[id=main:@literal:1] -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@371 = hip::hip_copy_literal[id=main:@literal:18] -> half_type, {768, 2304}, {2304, 1}, target_id=0
+@372 = hip::hip_copy_literal[id=main:@literal:19] -> half_type, {768}, {1}, target_id=0
+@373 = hip::hip_copy_literal[id=main:@literal:20] -> half_type, {768}, {1}, target_id=0
+@374 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@372) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@375 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@373) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@376 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@377 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@368,@375,@374,@376) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@378 = reshape_lazy[dims={-1, 768}](@377) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@379 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@380 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@378,@371,@370,@379) -> half_type, {6144, 2304}, {2304, 1}, target_id=0
+@381 = load[offset=103809024,end=113246208](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@382 = reshape_lazy[dims={16, 384, 3, 12, 64}](@380) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0
+@383 = transpose[permutation={2, 0, 3, 1, 4}](@382) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@384 = slice[axes={0},starts={1},ends={2}](@383) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@385 = squeeze[axes={0}](@384) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0
+@386 = transpose[permutation={0, 1, 3, 2}](@385) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0
+@387 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@386,@381) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0
+@388 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@389 = slice[axes={0},starts={0},ends={1}](@383) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@390 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@389,@388) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@391 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@392 = reshape_lazy[dims={16, 12, 384, 64}](@390) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@393 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@392,@387,@391) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@394 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@395 = slice[axes={0},starts={2},ends={3}](@383) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0
+@396 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@395,@394) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0
+@397 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@398 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@393,@40,@397) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0
+@399 = reshape_lazy[dims={16, 12, 384, 64}](@396) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@400 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@401 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@398,@399,@400) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0
+@402 = hip::hip_copy_literal[id=main:@literal:17] -> half_type, {768, 768}, {768, 1}, target_id=0
+@403 = transpose[permutation={0, 2, 1, 3}](@401) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0
+@404 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@405 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@403,@404) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0
+@406 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@407 = reshape_lazy[dims={6144, 768}](@405) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@408 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@407,@402,@406) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@409 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@369) -> half_type, {6144, 768}, {0, 1}, target_id=0
+@410 = reshape_lazy[dims={16, 384, 768}](@408) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@411 = reshape_lazy[dims={16, 384, 768}](@409) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@412 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@413 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@410,@411,@368,@412) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@414 = hip::hip_copy_literal[id=main:@literal:13] -> half_type, {768, 3072}, {3072, 1}, target_id=0
+@415 = hip::hip_copy_literal[id=main:@literal:14] -> half_type, {768}, {1}, target_id=0
+@416 = hip::hip_copy_literal[id=main:@literal:15] -> half_type, {768}, {1}, target_id=0
+@417 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@415) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@418 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@416) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@419 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@420 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@413,@418,@417,@419) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@421 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@422 = reshape_lazy[dims={-1, 768}](@420) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@423 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@422,@414,@421) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@424 = hip::hip_copy_literal[id=main:@literal:11] -> half_type, {3072, 768}, {768, 1}, target_id=0
+@425 = hip::hip_copy_literal[id=main:@literal:12] -> half_type, {3072}, {1}, target_id=0
+@426 = hip::hip_copy_literal[id=main:@literal:0] -> half_type, {6144, 768}, {768, 1}, target_id=0
+@427 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@425) -> half_type, {6144, 3072}, {0, 1}, target_id=0
+@428 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@429 = reshape_lazy[dims={16, 384, 3072}](@427) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0
+@430 = reshape_lazy[dims={16, 384, 3072}](@423) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@431 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@430,@429,@428) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0
+@432 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@433 = reshape_lazy[dims={-1, 3072}](@431) -> half_type, {6144, 3072}, {3072, 1}, target_id=0
+@434 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@433,@424,@426,@432) -> half_type, {6144, 768}, {768, 1}, target_id=0
+@435 = hip::hip_copy_literal[id=main:@literal:9] -> half_type, {768}, {1}, target_id=0
+@436 = hip::hip_copy_literal[id=main:@literal:10] -> half_type, {768}, {1}, target_id=0
+@437 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@435) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@438 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@436) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0
+@439 = reshape_lazy[dims={16, 384, 768}](@434) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+main:#output_0 = @param:main:#output_0 -> float_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@441 = gpu::code_object[code_object=5152,symbol_name=add_layernorm_mul_add_convert_kernel,global=786432,local=128,](@413,@439,@438,@437,main:#output_0) -> float_type, {16, 384, 768}, {294912, 768, 1}, target_id=0
+@442 = @return(@441), target_id=0
+
+
+Allocating params ... 
+Running performance report ... 
+@0 = check_context::migraphx::gpu::context -> float_type, {}, {}, target_id=0: 0.00092602ms, 1%
+@1 = hip::hip_allocate_memory[shape=int8_type, {160432128}, {1},id=main:scratch] -> int8_type, {160432128}, {1}, target_id=0: 0.0009868ms, 1%
+@2 = hip::hip_copy_literal[id=main:@literal:8] -> half_type, {1, 384, 768}, {294912, 768, 1}, target_id=0: 0.00068312ms, 1%
+@3 = load[offset=0,end=24576](@1) -> float_type, {16, 384}, {384, 1}, target_id=0: 0.0008324ms, 1%
+input_ids = @param:input_ids -> int64_type, {16, 384}, {384, 1}, target_id=0: 0.00051438ms, 1%
+@5 = gpu::code_object[code_object=4000,symbol_name=convert_kernel,global=3072,local=1024,](input_ids,@3) -> float_type, {16, 384}, {384, 1}, target_id=0: 0.0188957ms, 1%
+@6 = hip::hip_copy_literal[id=main:@literal:76] -> half_type, {50257, 768}, {768, 1}, target_id=0: 0.0007262ms, 1%
+@7 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00070804ms, 1%
+@8 = gpu::code_object[code_object=4104,symbol_name=gather_kernel,global=307200,local=1024,](@6,@5,@7) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0447974ms, 1%
+@9 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00072502ms, 1%
+@10 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@2) -> half_type, {16, 384, 768}, {0, 768, 1}, target_id=0: 0.00106928ms, 1%
+@11 = gpu::code_object[code_object=3976,symbol_name=add_kernel,global=589824,local=1024,](@8,@10,@9) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0372276ms, 1%
+@12 = hip::hip_copy_literal[id=main:@literal:6] -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.0006953ms, 1%
+@13 = hip::hip_copy_literal[id=main:@literal:74] -> half_type, {768}, {1}, target_id=0: 0.00060312ms, 1%
+@14 = hip::hip_copy_literal[id=main:@literal:75] -> half_type, {768}, {1}, target_id=0: 0.0007531ms, 1%
+@15 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0006824ms, 1%
+@16 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@13) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00097182ms, 1%
+@17 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@14) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00085338ms, 1%
+@18 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@11,@17,@16,@15) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0367177ms, 1%
+@19 = hip::hip_copy_literal[id=main:@literal:73] -> half_type, {768, 2304}, {2304, 1}, target_id=0: 0.0006789ms, 1%
+@20 = reshape_lazy[dims={-1, 768}](@18) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00074222ms, 1%
+@21 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00066874ms, 1%
+@22 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@20,@19,@12,@21) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.240392ms, 3%
+@23 = reshape_lazy[dims={16, 384, 3, 12, 64}](@22) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0: 0.00080652ms, 1%
+@24 = transpose[permutation={2, 0, 3, 1, 4}](@23) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00091522ms, 1%
+@25 = slice[axes={0},starts={0},ends={1}](@24) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00165788ms, 1%
+@26 = load[offset=103809024,end=113246208](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0007553ms, 1%
+@27 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@25,@26) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.036149ms, 1%
+@28 = slice[axes={0},starts={1},ends={2}](@24) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00139914ms, 1%
+@29 = load[offset=94371840,end=103809024](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.00067326ms, 1%
+@30 = squeeze[axes={0}](@28) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0: 0.00140984ms, 1%
+@31 = transpose[permutation={0, 1, 3, 2}](@30) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0: 0.00096932ms, 1%
+@32 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@31,@29) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.136563ms, 2%
+@33 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00073206ms, 1%
+@34 = reshape_lazy[dims={16, 12, 384, 64}](@27) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00070896ms, 1%
+@35 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@34,@32,@33) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.120312ms, 2%
+@36 = hip::hip_copy_literal[id=main:@literal:7] -> bool_type, {1, 1, 384, 384}, {147456, 147456, 384, 1}, target_id=0: 0.00084314ms, 1%
+@37 = slice[axes={0},starts={2},ends={3}](@24) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00149102ms, 1%
+@38 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00075498ms, 1%
+@39 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@37,@38) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.036309ms, 1%
+@40 = multibroadcast[out_lens={16, 12, 384, 384},out_dyn_dims={}](@36) -> bool_type, {16, 12, 384, 384}, {0, 0, 384, 1}, target_id=0: 0.00146018ms, 1%
+@41 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00069208ms, 1%
+@42 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@35,@40,@41) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.132261ms, 2%
+@43 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00073182ms, 1%
+@44 = reshape_lazy[dims={16, 12, 384, 64}](@39) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00072686ms, 1%
+@45 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@42,@44,@43) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.11868ms, 2%
+@46 = transpose[permutation={0, 2, 1, 3}](@45) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0: 0.00092836ms, 1%
+@47 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.00072338ms, 1%
+@48 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@46,@47) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0353544ms, 1%
+@49 = hip::hip_copy_literal[id=main:@literal:72] -> half_type, {768, 768}, {768, 1}, target_id=0: 0.000849ms, 1%
+@50 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00069066ms, 1%
+@51 = reshape_lazy[dims={6144, 768}](@48) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00072198ms, 1%
+@52 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@51,@49,@50) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.112852ms, 1%
+@53 = hip::hip_copy_literal[id=main:@literal:71] -> half_type, {768}, {1}, target_id=0: 0.00080014ms, 1%
+@54 = reshape_lazy[dims={16, 384, 768}](@52) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00072954ms, 1%
+@55 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@53) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00120626ms, 1%
+@56 = reshape_lazy[dims={16, 384, 768}](@55) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00098072ms, 1%
+@57 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00075312ms, 1%
+@58 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@54,@56,@11,@57) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0583754ms, 1%
+@59 = hip::hip_copy_literal[id=main:@literal:69] -> half_type, {768}, {1}, target_id=0: 0.00071704ms, 1%
+@60 = hip::hip_copy_literal[id=main:@literal:70] -> half_type, {768}, {1}, target_id=0: 0.00060578ms, 1%
+@61 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@59) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0010312ms, 1%
+@62 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@60) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0008737ms, 1%
+@63 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00067348ms, 1%
+@64 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@58,@62,@61,@63) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0370039ms, 1%
+@65 = hip::hip_copy_literal[id=main:@literal:68] -> half_type, {768, 3072}, {3072, 1}, target_id=0: 0.0006672ms, 1%
+@66 = reshape_lazy[dims={-1, 768}](@64) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00068586ms, 1%
+@67 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00067716ms, 1%
+@68 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@66,@65,@67) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.26954ms, 3%
+@69 = hip::hip_copy_literal[id=main:@literal:67] -> half_type, {3072}, {1}, target_id=0: 0.0008032ms, 1%
+@70 = reshape_lazy[dims={16, 384, 3072}](@68) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0007107ms, 1%
+@71 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@69) -> half_type, {6144, 3072}, {0, 1}, target_id=0: 0.0010481ms, 1%
+@72 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00070628ms, 1%
+@73 = reshape_lazy[dims={16, 384, 3072}](@71) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0: 0.00091478ms, 1%
+@74 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@70,@73,@72) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.093508ms, 1%
+@75 = hip::hip_copy_literal[id=main:@literal:66] -> half_type, {3072, 768}, {768, 1}, target_id=0: 0.00069148ms, 1%
+@76 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00069458ms, 1%
+@77 = reshape_lazy[dims={-1, 3072}](@74) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00064774ms, 1%
+@78 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@77,@75,@76) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.345697ms, 3%
+@79 = hip::hip_copy_literal[id=main:@literal:65] -> half_type, {768}, {1}, target_id=0: 0.00078352ms, 1%
+@80 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@79) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00107796ms, 1%
+@81 = reshape_lazy[dims={16, 384, 768}](@78) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00068686ms, 1%
+@82 = load[offset=150994944,end=160432128](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00072218ms, 1%
+@83 = reshape_lazy[dims={16, 384, 768}](@80) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00093954ms, 1%
+@84 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@81,@83,@58,@82) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0570842ms, 1%
+@85 = hip::hip_copy_literal[id=main:@literal:5] -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00067742ms, 1%
+@86 = hip::hip_copy_literal[id=main:@literal:63] -> half_type, {768}, {1}, target_id=0: 0.00061828ms, 1%
+@87 = hip::hip_copy_literal[id=main:@literal:64] -> half_type, {768}, {1}, target_id=0: 0.00076098ms, 1%
+@88 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@86) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0010232ms, 1%
+@89 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@87) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00093424ms, 1%
+@90 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00065014ms, 1%
+@91 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@84,@89,@88,@90) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0368594ms, 1%
+@92 = hip::hip_copy_literal[id=main:@literal:62] -> half_type, {768, 2304}, {2304, 1}, target_id=0: 0.00068722ms, 1%
+@93 = load[offset=0,end=28311552](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00074366ms, 1%
+@94 = reshape_lazy[dims={-1, 768}](@91) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00067ms, 1%
+@95 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@94,@92,@85,@93) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.240451ms, 3%
+@96 = reshape_lazy[dims={16, 384, 3, 12, 64}](@95) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0: 0.00080216ms, 1%
+@97 = transpose[permutation={2, 0, 3, 1, 4}](@96) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00082464ms, 1%
+@98 = slice[axes={0},starts={0},ends={1}](@97) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.0014518ms, 1%
+@99 = load[offset=37748736,end=47185920](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00073574ms, 1%
+@100 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@98,@99) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0361683ms, 1%
+@101 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.00074358ms, 1%
+@102 = slice[axes={0},starts={1},ends={2}](@97) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00123292ms, 1%
+@103 = squeeze[axes={0}](@102) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0: 0.00132578ms, 1%
+@104 = transpose[permutation={0, 1, 3, 2}](@103) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0: 0.00094438ms, 1%
+@105 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@104,@101) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.136371ms, 2%
+@106 = reshape_lazy[dims={16, 12, 384, 64}](@100) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00074754ms, 1%
+@107 = load[offset=94371840,end=150994944](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00069224ms, 1%
+@108 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@106,@105,@107) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.12069ms, 2%
+@109 = load[offset=37748736,end=94371840](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00083922ms, 1%
+@110 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@108,@40,@109) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.132629ms, 2%
+@111 = slice[axes={0},starts={2},ends={3}](@97) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00166066ms, 1%
+@112 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00067868ms, 1%
+@113 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@111,@112) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0361216ms, 1%
+@114 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00074016ms, 1%
+@115 = reshape_lazy[dims={16, 12, 384, 64}](@113) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00071044ms, 1%
+@116 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@110,@115,@114) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.117002ms, 2%
+@117 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.00082898ms, 1%
+@118 = transpose[permutation={0, 2, 1, 3}](@116) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0: 0.00080466ms, 1%
+@119 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@118,@117) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0352267ms, 1%
+@120 = hip::hip_copy_literal[id=main:@literal:61] -> half_type, {768, 768}, {768, 1}, target_id=0: 0.00088262ms, 1%
+@121 = reshape_lazy[dims={6144, 768}](@119) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.0007135ms, 1%
+@122 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.0006895ms, 1%
+@123 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@121,@120,@122) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.112977ms, 1%
+@124 = hip::hip_copy_literal[id=main:@literal:60] -> half_type, {768}, {1}, target_id=0: 0.00080172ms, 1%
+@125 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@124) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00128128ms, 1%
+@126 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.000716ms, 1%
+@127 = reshape_lazy[dims={16, 384, 768}](@123) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0007001ms, 1%
+@128 = reshape_lazy[dims={16, 384, 768}](@125) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00094304ms, 1%
+@129 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@127,@128,@84,@126) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0540008ms, 1%
+@130 = hip::hip_copy_literal[id=main:@literal:58] -> half_type, {768}, {1}, target_id=0: 0.000717ms, 1%
+@131 = hip::hip_copy_literal[id=main:@literal:59] -> half_type, {768}, {1}, target_id=0: 0.00063286ms, 1%
+@132 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0006887ms, 1%
+@133 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@130) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0010167ms, 1%
+@134 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@131) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00084496ms, 1%
+@135 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@129,@134,@133,@132) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0368339ms, 1%
+@136 = hip::hip_copy_literal[id=main:@literal:57] -> half_type, {768, 3072}, {3072, 1}, target_id=0: 0.00068948ms, 1%
+@137 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00069932ms, 1%
+@138 = reshape_lazy[dims={-1, 768}](@135) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00065798ms, 1%
+@139 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@138,@136,@137) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.267216ms, 3%
+@140 = hip::hip_copy_literal[id=main:@literal:56] -> half_type, {3072}, {1}, target_id=0: 0.00079068ms, 1%
+@141 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@140) -> half_type, {6144, 3072}, {0, 1}, target_id=0: 0.00108658ms, 1%
+@142 = reshape_lazy[dims={16, 384, 3072}](@139) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00067466ms, 1%
+@143 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0007071ms, 1%
+@144 = reshape_lazy[dims={16, 384, 3072}](@141) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0: 0.00089424ms, 1%
+@145 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@142,@144,@143) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0930729ms, 1%
+@146 = hip::hip_copy_literal[id=main:@literal:55] -> half_type, {3072, 768}, {768, 1}, target_id=0: 0.00072924ms, 1%
+@147 = reshape_lazy[dims={-1, 3072}](@145) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00066028ms, 1%
+@148 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00067182ms, 1%
+@149 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@147,@146,@148) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.345984ms, 3%
+@150 = hip::hip_copy_literal[id=main:@literal:54] -> half_type, {768}, {1}, target_id=0: 0.00082502ms, 1%
+@151 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@150) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00106086ms, 1%
+@152 = reshape_lazy[dims={16, 384, 768}](@151) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00097066ms, 1%
+@153 = reshape_lazy[dims={16, 384, 768}](@149) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00063502ms, 1%
+@154 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00070836ms, 1%
+@155 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@153,@152,@129,@154) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0592722ms, 1%
+@156 = hip::hip_copy_literal[id=main:@literal:4] -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00071606ms, 1%
+@157 = hip::hip_copy_literal[id=main:@literal:52] -> half_type, {768}, {1}, target_id=0: 0.00077608ms, 1%
+@158 = hip::hip_copy_literal[id=main:@literal:53] -> half_type, {768}, {1}, target_id=0: 0.00059452ms, 1%
+@159 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00070686ms, 1%
+@160 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@157) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0013176ms, 1%
+@161 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@158) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00097892ms, 1%
+@162 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@155,@161,@160,@159) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0368659ms, 1%
+@163 = hip::hip_copy_literal[id=main:@literal:51] -> half_type, {768, 2304}, {2304, 1}, target_id=0: 0.000778ms, 1%
+@164 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00072118ms, 1%
+@165 = reshape_lazy[dims={-1, 768}](@162) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00065152ms, 1%
+@166 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@165,@163,@156,@164) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.240399ms, 3%
+@167 = reshape_lazy[dims={16, 384, 3, 12, 64}](@166) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0: 0.00079054ms, 1%
+@168 = transpose[permutation={2, 0, 3, 1, 4}](@167) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.0008112ms, 1%
+@169 = slice[axes={0},starts={1},ends={2}](@168) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00142026ms, 1%
+@170 = squeeze[axes={0}](@169) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0: 0.00115348ms, 1%
+@171 = transpose[permutation={0, 1, 3, 2}](@170) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0: 0.00112074ms, 1%
+@172 = load[offset=103809024,end=113246208](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.00073818ms, 1%
+@173 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@171,@172) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.136678ms, 2%
+@174 = slice[axes={0},starts={0},ends={1}](@168) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00138366ms, 1%
+@175 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00070078ms, 1%
+@176 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@174,@175) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0360333ms, 1%
+@177 = reshape_lazy[dims={16, 12, 384, 64}](@176) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00074624ms, 1%
+@178 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.0006956ms, 1%
+@179 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@177,@173,@178) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.121236ms, 2%
+@180 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00084934ms, 1%
+@181 = slice[axes={0},starts={2},ends={3}](@168) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00132802ms, 1%
+@182 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@181,@180) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0364315ms, 1%
+@183 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00073232ms, 1%
+@184 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@179,@40,@183) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.132616ms, 2%
+@185 = reshape_lazy[dims={16, 12, 384, 64}](@182) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00079254ms, 1%
+@186 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.000684ms, 1%
+@187 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@184,@185,@186) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.118075ms, 2%
+@188 = transpose[permutation={0, 2, 1, 3}](@187) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0: 0.00093018ms, 1%
+@189 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.00070458ms, 1%
+@190 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@188,@189) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0353125ms, 1%
+@191 = hip::hip_copy_literal[id=main:@literal:50] -> half_type, {768, 768}, {768, 1}, target_id=0: 0.00087838ms, 1%
+@192 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.0007206ms, 1%
+@193 = reshape_lazy[dims={6144, 768}](@190) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00070018ms, 1%
+@194 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@193,@191,@192) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.112529ms, 1%
+@195 = hip::hip_copy_literal[id=main:@literal:49] -> half_type, {768}, {1}, target_id=0: 0.0008059ms, 1%
+@196 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@195) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00125442ms, 1%
+@197 = reshape_lazy[dims={16, 384, 768}](@194) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00070248ms, 1%
+@198 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0007283ms, 1%
+@199 = reshape_lazy[dims={16, 384, 768}](@196) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00094104ms, 1%
+@200 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@197,@199,@155,@198) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0522783ms, 1%
+@201 = hip::hip_copy_literal[id=main:@literal:47] -> half_type, {768}, {1}, target_id=0: 0.00072154ms, 1%
+@202 = hip::hip_copy_literal[id=main:@literal:48] -> half_type, {768}, {1}, target_id=0: 0.0006101ms, 1%
+@203 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@201) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00101568ms, 1%
+@204 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@202) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00086798ms, 1%
+@205 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00069616ms, 1%
+@206 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@200,@204,@203,@205) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0369865ms, 1%
+@207 = hip::hip_copy_literal[id=main:@literal:46] -> half_type, {768, 3072}, {3072, 1}, target_id=0: 0.00067112ms, 1%
+@208 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00071814ms, 1%
+@209 = reshape_lazy[dims={-1, 768}](@206) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00068012ms, 1%
+@210 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@209,@207,@208) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.267195ms, 3%
+@211 = hip::hip_copy_literal[id=main:@literal:45] -> half_type, {3072}, {1}, target_id=0: 0.00081294ms, 1%
+@212 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@211) -> half_type, {6144, 3072}, {0, 1}, target_id=0: 0.00107754ms, 1%
+@213 = reshape_lazy[dims={16, 384, 3072}](@212) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0: 0.00097964ms, 1%
+@214 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00069772ms, 1%
+@215 = reshape_lazy[dims={16, 384, 3072}](@210) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00064798ms, 1%
+@216 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@215,@213,@214) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0930608ms, 1%
+@217 = hip::hip_copy_literal[id=main:@literal:44] -> half_type, {3072, 768}, {768, 1}, target_id=0: 0.00071194ms, 1%
+@218 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00069846ms, 1%
+@219 = reshape_lazy[dims={-1, 3072}](@216) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00062038ms, 1%
+@220 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@219,@217,@218) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.346268ms, 3%
+@221 = hip::hip_copy_literal[id=main:@literal:43] -> half_type, {768}, {1}, target_id=0: 0.00079076ms, 1%
+@222 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00075194ms, 1%
+@223 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@221) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00102864ms, 1%
+@224 = reshape_lazy[dims={16, 384, 768}](@223) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0009362ms, 1%
+@225 = reshape_lazy[dims={16, 384, 768}](@220) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00063278ms, 1%
+@226 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@225,@224,@200,@222) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0538992ms, 1%
+@227 = hip::hip_copy_literal[id=main:@literal:41] -> half_type, {768}, {1}, target_id=0: 0.00073542ms, 1%
+@228 = hip::hip_copy_literal[id=main:@literal:42] -> half_type, {768}, {1}, target_id=0: 0.0007522ms, 1%
+@229 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00070588ms, 1%
+@230 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@227) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00097856ms, 1%
+@231 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@228) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00086786ms, 1%
+@232 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@226,@231,@230,@229) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0369461ms, 1%
+@233 = hip::hip_copy_literal[id=main:@literal:3] -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00067778ms, 1%
+@234 = hip::hip_copy_literal[id=main:@literal:40] -> half_type, {768, 2304}, {2304, 1}, target_id=0: 0.00059282ms, 1%
+@235 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00071248ms, 1%
+@236 = reshape_lazy[dims={-1, 768}](@232) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00064778ms, 1%
+@237 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@236,@234,@233,@235) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.240339ms, 3%
+@238 = hip::hip_copy_literal[id=main:@literal:38] -> half_type, {768}, {1}, target_id=0: 0.00081784ms, 1%
+@239 = reshape_lazy[dims={16, 384, 3, 12, 64}](@237) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0: 0.00073868ms, 1%
+@240 = load[offset=103809024,end=113246208](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00075676ms, 1%
+@241 = transpose[permutation={2, 0, 3, 1, 4}](@239) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00081484ms, 1%
+@242 = slice[axes={0},starts={0},ends={1}](@241) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00140686ms, 1%
+@243 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@242,@240) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0361369ms, 1%
+@244 = slice[axes={0},starts={1},ends={2}](@241) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.0013343ms, 1%
+@245 = load[offset=94371840,end=103809024](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.00069576ms, 1%
+@246 = squeeze[axes={0}](@244) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0: 0.00136806ms, 1%
+@247 = transpose[permutation={0, 1, 3, 2}](@246) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0: 0.0009666ms, 1%
+@248 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@247,@245) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.13658ms, 2%
+@249 = reshape_lazy[dims={16, 12, 384, 64}](@243) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00073558ms, 1%
+@250 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00071858ms, 1%
+@251 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@249,@248,@250) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.11929ms, 2%
+@252 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.000864ms, 1%
+@253 = slice[axes={0},starts={2},ends={3}](@241) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00144462ms, 1%
+@254 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@253,@252) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0363119ms, 1%
+@255 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00075324ms, 1%
+@256 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@251,@40,@255) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.132344ms, 2%
+@257 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00074636ms, 1%
+@258 = reshape_lazy[dims={16, 12, 384, 64}](@254) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00071338ms, 1%
+@259 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@256,@258,@257) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.118554ms, 2%
+@260 = hip::hip_copy_literal[id=main:@literal:39] -> half_type, {768, 768}, {768, 1}, target_id=0: 0.00119902ms, 1%
+@261 = transpose[permutation={0, 2, 1, 3}](@259) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0: 0.00084084ms, 1%
+@262 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0007341ms, 1%
+@263 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@261,@262) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0352065ms, 1%
+@264 = reshape_lazy[dims={6144, 768}](@263) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.0007596ms, 1%
+@265 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00070792ms, 1%
+@266 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@264,@260,@265) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.111591ms, 1%
+@267 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@238) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00149942ms, 1%
+@268 = reshape_lazy[dims={16, 384, 768}](@267) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00101414ms, 1%
+@269 = reshape_lazy[dims={16, 384, 768}](@266) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00063232ms, 1%
+@270 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00073338ms, 1%
+@271 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@269,@268,@226,@270) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0607732ms, 1%
+@272 = hip::hip_copy_literal[id=main:@literal:35] -> half_type, {768, 3072}, {3072, 1}, target_id=0: 0.00081876ms, 1%
+@273 = hip::hip_copy_literal[id=main:@literal:36] -> half_type, {768}, {1}, target_id=0: 0.0007316ms, 1%
+@274 = hip::hip_copy_literal[id=main:@literal:37] -> half_type, {768}, {1}, target_id=0: 0.0006307ms, 1%
+@275 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@273) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00127816ms, 1%
+@276 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@274) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.0008767ms, 1%
+@277 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00067958ms, 1%
+@278 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@271,@276,@275,@277) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0368266ms, 1%
+@279 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00076782ms, 1%
+@280 = reshape_lazy[dims={-1, 768}](@278) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00067574ms, 1%
+@281 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@280,@272,@279) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.264794ms, 3%
+@282 = hip::hip_copy_literal[id=main:@literal:33] -> half_type, {3072, 768}, {768, 1}, target_id=0: 0.00078522ms, 1%
+@283 = hip::hip_copy_literal[id=main:@literal:34] -> half_type, {3072}, {1}, target_id=0: 0.00075964ms, 1%
+@284 = reshape_lazy[dims={16, 384, 3072}](@281) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0007023ms, 1%
+@285 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@283) -> half_type, {6144, 3072}, {0, 1}, target_id=0: 0.00104626ms, 1%
+@286 = reshape_lazy[dims={16, 384, 3072}](@285) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0: 0.00089166ms, 1%
+@287 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00070592ms, 1%
+@288 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@284,@286,@287) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0931384ms, 1%
+@289 = reshape_lazy[dims={-1, 3072}](@288) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00070796ms, 1%
+@290 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00068556ms, 1%
+@291 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@289,@282,@290) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.344427ms, 3%
+@292 = hip::hip_copy_literal[id=main:@literal:32] -> half_type, {768}, {1}, target_id=0: 0.00078606ms, 1%
+@293 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@292) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00108336ms, 1%
+@294 = reshape_lazy[dims={16, 384, 768}](@293) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00096122ms, 1%
+@295 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0007281ms, 1%
+@296 = reshape_lazy[dims={16, 384, 768}](@291) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00062026ms, 1%
+@297 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@296,@294,@271,@295) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.053848ms, 1%
+@298 = hip::hip_copy_literal[id=main:@literal:27] -> half_type, {768}, {1}, target_id=0: 0.00068694ms, 1%
+@299 = hip::hip_copy_literal[id=main:@literal:2] -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00064314ms, 1%
+@300 = hip::hip_copy_literal[id=main:@literal:29] -> half_type, {768, 2304}, {2304, 1}, target_id=0: 0.00079638ms, 1%
+@301 = hip::hip_copy_literal[id=main:@literal:30] -> half_type, {768}, {1}, target_id=0: 0.000588ms, 1%
+@302 = hip::hip_copy_literal[id=main:@literal:31] -> half_type, {768}, {1}, target_id=0: 0.00065602ms, 1%
+@303 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@301) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00135296ms, 1%
+@304 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@302) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.000981ms, 1%
+@305 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00066924ms, 1%
+@306 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@297,@304,@303,@305) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0368052ms, 1%
+@307 = reshape_lazy[dims={-1, 768}](@306) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.0007275ms, 1%
+@308 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00071336ms, 1%
+@309 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@307,@300,@299,@308) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.240231ms, 3%
+@310 = reshape_lazy[dims={16, 384, 3, 12, 64}](@309) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0: 0.00077962ms, 1%
+@311 = load[offset=103809024,end=113246208](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00074434ms, 1%
+@312 = transpose[permutation={2, 0, 3, 1, 4}](@310) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00081586ms, 1%
+@313 = slice[axes={0},starts={0},ends={1}](@312) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00145916ms, 1%
+@314 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@313,@311) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0360264ms, 1%
+@315 = load[offset=94371840,end=103809024](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.00076976ms, 1%
+@316 = slice[axes={0},starts={1},ends={2}](@312) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00112544ms, 1%
+@317 = squeeze[axes={0}](@316) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0: 0.00122576ms, 1%
+@318 = transpose[permutation={0, 1, 3, 2}](@317) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0: 0.00094192ms, 1%
+@319 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@318,@315) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.136524ms, 2%
+@320 = reshape_lazy[dims={16, 12, 384, 64}](@314) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00073202ms, 1%
+@321 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00070796ms, 1%
+@322 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@320,@319,@321) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.11943ms, 2%
+@323 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00085362ms, 1%
+@324 = slice[axes={0},starts={2},ends={3}](@312) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00138232ms, 1%
+@325 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@324,@323) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0362741ms, 1%
+@326 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.00071046ms, 1%
+@327 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@322,@40,@326) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.13264ms, 2%
+@328 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00072666ms, 1%
+@329 = reshape_lazy[dims={16, 12, 384, 64}](@325) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00070876ms, 1%
+@330 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@327,@329,@328) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.11872ms, 2%
+@331 = hip::hip_copy_literal[id=main:@literal:28] -> half_type, {768, 768}, {768, 1}, target_id=0: 0.00115592ms, 1%
+@332 = transpose[permutation={0, 2, 1, 3}](@330) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0: 0.00083194ms, 1%
+@333 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.00073422ms, 1%
+@334 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@332,@333) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0350368ms, 1%
+@335 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00073582ms, 1%
+@336 = reshape_lazy[dims={6144, 768}](@334) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.000706ms, 1%
+@337 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@336,@331,@335) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.112815ms, 1%
+@338 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0008303ms, 1%
+@339 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@298) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.001272ms, 1%
+@340 = reshape_lazy[dims={16, 384, 768}](@339) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00098782ms, 1%
+@341 = reshape_lazy[dims={16, 384, 768}](@337) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00062936ms, 1%
+@342 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@341,@340,@297,@338) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0544041ms, 1%
+@343 = hip::hip_copy_literal[id=main:@literal:24] -> half_type, {768, 3072}, {3072, 1}, target_id=0: 0.000817ms, 1%
+@344 = hip::hip_copy_literal[id=main:@literal:25] -> half_type, {768}, {1}, target_id=0: 0.00078306ms, 1%
+@345 = hip::hip_copy_literal[id=main:@literal:26] -> half_type, {768}, {1}, target_id=0: 0.00060528ms, 1%
+@346 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@344) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00098864ms, 1%
+@347 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@345) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00087724ms, 1%
+@348 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00068778ms, 1%
+@349 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@342,@347,@346,@348) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0368545ms, 1%
+@350 = reshape_lazy[dims={-1, 768}](@349) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00072592ms, 1%
+@351 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.0007047ms, 1%
+@352 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@350,@343,@351) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.266962ms, 3%
+@353 = hip::hip_copy_literal[id=main:@literal:22] -> half_type, {3072, 768}, {768, 1}, target_id=0: 0.00083012ms, 1%
+@354 = hip::hip_copy_literal[id=main:@literal:23] -> half_type, {3072}, {1}, target_id=0: 0.00079802ms, 1%
+@355 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@354) -> half_type, {6144, 3072}, {0, 1}, target_id=0: 0.00108104ms, 1%
+@356 = reshape_lazy[dims={16, 384, 3072}](@352) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.000709ms, 1%
+@357 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00071002ms, 1%
+@358 = reshape_lazy[dims={16, 384, 3072}](@355) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0: 0.00091058ms, 1%
+@359 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@356,@358,@357) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0931955ms, 1%
+@360 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00072938ms, 1%
+@361 = reshape_lazy[dims={-1, 3072}](@359) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.0006447ms, 1%
+@362 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@361,@353,@360) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.345882ms, 3%
+@363 = hip::hip_copy_literal[id=main:@literal:21] -> half_type, {768}, {1}, target_id=0: 0.00079488ms, 1%
+@364 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@363) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00110546ms, 1%
+@365 = reshape_lazy[dims={16, 384, 768}](@364) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00095752ms, 1%
+@366 = reshape_lazy[dims={16, 384, 768}](@362) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00062178ms, 1%
+@367 = load[offset=0,end=9437184](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00071548ms, 1%
+@368 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@366,@365,@342,@367) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0547856ms, 1%
+@369 = hip::hip_copy_literal[id=main:@literal:16] -> half_type, {768}, {1}, target_id=0: 0.0006901ms, 1%
+@370 = hip::hip_copy_literal[id=main:@literal:1] -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00062974ms, 1%
+@371 = hip::hip_copy_literal[id=main:@literal:18] -> half_type, {768, 2304}, {2304, 1}, target_id=0: 0.00070682ms, 1%
+@372 = hip::hip_copy_literal[id=main:@literal:19] -> half_type, {768}, {1}, target_id=0: 0.0006264ms, 1%
+@373 = hip::hip_copy_literal[id=main:@literal:20] -> half_type, {768}, {1}, target_id=0: 0.00069386ms, 1%
+@374 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@372) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00099346ms, 1%
+@375 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@373) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.000873ms, 1%
+@376 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00067978ms, 1%
+@377 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@368,@375,@374,@376) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0386599ms, 1%
+@378 = reshape_lazy[dims={-1, 768}](@377) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00071584ms, 1%
+@379 = load[offset=66060288,end=94371840](@1) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.00070444ms, 1%
+@380 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@378,@371,@370,@379) -> half_type, {6144, 2304}, {2304, 1}, target_id=0: 0.239733ms, 3%
+@381 = load[offset=103809024,end=113246208](@1) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.0008476ms, 1%
+@382 = reshape_lazy[dims={16, 384, 3, 12, 64}](@380) -> half_type, {16, 384, 3, 12, 64}, {884736, 2304, 768, 64, 1}, target_id=0: 0.00069846ms, 1%
+@383 = transpose[permutation={2, 0, 3, 1, 4}](@382) -> half_type, {3, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.0008353ms, 1%
+@384 = slice[axes={0},starts={1},ends={2}](@383) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00149272ms, 1%
+@385 = squeeze[axes={0}](@384) -> half_type, {16, 12, 384, 64}, {884736, 64, 2304, 1}, target_id=0: 0.00150604ms, 1%
+@386 = transpose[permutation={0, 1, 3, 2}](@385) -> half_type, {16, 12, 64, 384}, {884736, 64, 1, 2304}, target_id=0: 0.00108296ms, 1%
+@387 = gpu::code_object[code_object=4032,symbol_name=contiguous_kernel,global=4718592,local=1024,](@386,@381) -> half_type, {16, 12, 64, 384}, {294912, 24576, 384, 1}, target_id=0: 0.136985ms, 2%
+@388 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00079178ms, 1%
+@389 = slice[axes={0},starts={0},ends={1}](@383) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.0012099ms, 1%
+@390 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@389,@388) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.0360807ms, 1%
+@391 = load[offset=9437184,end=66060288](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.0007412ms, 1%
+@392 = reshape_lazy[dims={16, 12, 384, 64}](@390) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.0006773ms, 1%
+@393 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@392,@387,@391) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.120981ms, 2%
+@394 = load[offset=94371840,end=103809024](@1) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.00085568ms, 1%
+@395 = slice[axes={0},starts={2},ends={3}](@383) -> half_type, {1, 16, 12, 384, 64}, {768, 884736, 64, 2304, 1}, target_id=0: 0.00166374ms, 1%
+@396 = gpu::code_object[code_object=4048,symbol_name=contiguous_kernel,global=1179648,local=1024,](@395,@394) -> half_type, {1, 16, 12, 384, 64}, {4718592, 294912, 24576, 64, 1}, target_id=0: 0.036494ms, 1%
+@397 = load[offset=103809024,end=160432128](@1) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.0007398ms, 1%
+@398 = gpu::code_object[code_object=5544,symbol_name=mul_where_reduce_max_sub_exp_reduce_sum_div_kernel,global=4718592,local=64,](@393,@40,@397) -> half_type, {16, 12, 384, 384}, {1769472, 147456, 384, 1}, target_id=0: 0.133143ms, 2%
+@399 = reshape_lazy[dims={16, 12, 384, 64}](@396) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.00077066ms, 1%
+@400 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.0006911ms, 1%
+@401 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@398,@399,@400) -> half_type, {16, 12, 384, 64}, {294912, 24576, 64, 1}, target_id=0: 0.119368ms, 2%
+@402 = hip::hip_copy_literal[id=main:@literal:17] -> half_type, {768, 768}, {768, 1}, target_id=0: 0.00116856ms, 1%
+@403 = transpose[permutation={0, 2, 1, 3}](@401) -> half_type, {16, 384, 12, 64}, {294912, 64, 24576, 1}, target_id=0: 0.0008609ms, 1%
+@404 = load[offset=28311552,end=37748736](@1) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.00072174ms, 1%
+@405 = gpu::code_object[code_object=4064,symbol_name=contiguous_kernel,global=1179648,local=1024,](@403,@404) -> half_type, {16, 384, 12, 64}, {294912, 768, 64, 1}, target_id=0: 0.0349401ms, 1%
+@406 = load[offset=18874368,end=28311552](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00076098ms, 1%
+@407 = reshape_lazy[dims={6144, 768}](@405) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00070236ms, 1%
+@408 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@407,@402,@406) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.112535ms, 1%
+@409 = multibroadcast[out_lens={6144, 768},out_dyn_dims={}](@369) -> half_type, {6144, 768}, {0, 1}, target_id=0: 0.00149084ms, 1%
+@410 = reshape_lazy[dims={16, 384, 768}](@408) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00069148ms, 1%
+@411 = reshape_lazy[dims={16, 384, 768}](@409) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00096282ms, 1%
+@412 = load[offset=9437184,end=18874368](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00074814ms, 1%
+@413 = gpu::code_object[code_object=4288,symbol_name=add_add_kernel,global=589824,local=1024,](@410,@411,@368,@412) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0490443ms, 1%
+@414 = hip::hip_copy_literal[id=main:@literal:13] -> half_type, {768, 3072}, {3072, 1}, target_id=0: 0.00083276ms, 1%
+@415 = hip::hip_copy_literal[id=main:@literal:14] -> half_type, {768}, {1}, target_id=0: 0.00062406ms, 1%
+@416 = hip::hip_copy_literal[id=main:@literal:15] -> half_type, {768}, {1}, target_id=0: 0.0007071ms, 1%
+@417 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@415) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00099142ms, 1%
+@418 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@416) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00088824ms, 1%
+@419 = load[offset=18874368,end=28311552](@1) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0007172ms, 1%
+@420 = gpu::code_object[code_object=4984,symbol_name=layernorm_mul_add_kernel,global=786432,local=128,](@413,@418,@417,@419) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0369935ms, 1%
+@421 = load[offset=56623104,end=94371840](@1) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.00076346ms, 1%
+@422 = reshape_lazy[dims={-1, 768}](@420) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.0006864ms, 1%
+@423 = gpu::gemm[alpha=1,beta=0,compute_fp32=1,trans_batch=0,solution_idx=0](@422,@414,@421) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.267616ms, 3%
+@424 = hip::hip_copy_literal[id=main:@literal:11] -> half_type, {3072, 768}, {768, 1}, target_id=0: 0.0007731ms, 1%
+@425 = hip::hip_copy_literal[id=main:@literal:12] -> half_type, {3072}, {1}, target_id=0: 0.00073882ms, 1%
+@426 = hip::hip_copy_literal[id=main:@literal:0] -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00058326ms, 1%
+@427 = multibroadcast[out_lens={6144, 3072},out_dyn_dims={}](@425) -> half_type, {6144, 3072}, {0, 1}, target_id=0: 0.00107634ms, 1%
+@428 = load[offset=18874368,end=56623104](@1) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00072878ms, 1%
+@429 = reshape_lazy[dims={16, 384, 3072}](@427) -> half_type, {16, 384, 3072}, {0, 0, 1}, target_id=0: 0.00098186ms, 1%
+@430 = reshape_lazy[dims={16, 384, 3072}](@423) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.00064354ms, 1%
+@431 = gpu::code_object[code_object=4984,symbol_name=add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel,global=2359296,local=1024,](@430,@429,@428) -> half_type, {16, 384, 3072}, {1179648, 3072, 1}, target_id=0: 0.0932949ms, 1%
+@432 = load[offset=56623104,end=66060288](@1) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.00074966ms, 1%
+@433 = reshape_lazy[dims={-1, 3072}](@431) -> half_type, {6144, 3072}, {3072, 1}, target_id=0: 0.0006572ms, 1%
+@434 = gpu::gemm[alpha=1,beta=1,compute_fp32=1,trans_batch=0,solution_idx=0](@433,@424,@426,@432) -> half_type, {6144, 768}, {768, 1}, target_id=0: 0.36262ms, 4%
+@435 = hip::hip_copy_literal[id=main:@literal:9] -> half_type, {768}, {1}, target_id=0: 0.00076014ms, 1%
+@436 = hip::hip_copy_literal[id=main:@literal:10] -> half_type, {768}, {1}, target_id=0: 0.0005951ms, 1%
+@437 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@435) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00108018ms, 1%
+@438 = multibroadcast[out_lens={16, 384, 768},out_dyn_dims={}](@436) -> half_type, {16, 384, 768}, {0, 0, 1}, target_id=0: 0.00092492ms, 1%
+@439 = reshape_lazy[dims={16, 384, 768}](@434) -> half_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00068334ms, 1%
+main:#output_0 = @param:main:#output_0 -> float_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.00087672ms, 1%
+@441 = gpu::code_object[code_object=5152,symbol_name=add_layernorm_mul_add_convert_kernel,global=786432,local=128,](@413,@439,@438,@437,main:#output_0) -> float_type, {16, 384, 768}, {294912, 768, 1}, target_id=0: 0.0587516ms, 1%
+@442 = @return(@441), target_id=0
+Summary:
+gpu::gemm: 7.24338ms / 36 = 0.201205ms, 63%
+gpu::code_object::contiguous_kernel: 1.46532ms / 24 = 0.0610548ms, 13%
+gpu::code_object::mul_where_reduce_max_sub_exp_reduce_sum_div_kernel: 0.795634ms / 6 = 0.132606ms, 7%
+gpu::code_object::add_add_kernel: 0.607765ms / 11 = 0.0552514ms, 6%
+gpu::code_object::add_mul_mul_mul_mul_add_neg_sub_exp_add_div_mul_kernel: 0.559271ms / 6 = 0.0932118ms, 5%
+gpu::code_object::layernorm_mul_add_kernel: 0.444353ms / 12 = 0.0370294ms, 4%
+load: 0.0713542ms / 98 = 0.000728104ms, 1%
+gpu::code_object::add_layernorm_mul_add_convert_kernel: 0.0587516ms / 1 = 0.0587516ms, 1%
+reshape_lazy: 0.058116ms / 77 = 0.000754753ms, 1%
+hip::hip_copy_literal: 0.0571517ms / 77 = 0.00074223ms, 1%
+multibroadcast: 0.0479875ms / 45 = 0.00106639ms, 1%
+gpu::code_object::gather_kernel: 0.0447974ms / 1 = 0.0447974ms, 1%
+gpu::code_object::add_kernel: 0.0372276ms / 1 = 0.0372276ms, 1%
+slice: 0.0255444ms / 18 = 0.00141913ms, 1%
+gpu::code_object::convert_kernel: 0.0188957ms / 1 = 0.0188957ms, 1%
+transpose: 0.0162399ms / 18 = 0.000902214ms, 1%
+squeeze: 0.00798896ms / 6 = 0.00133149ms, 1%
+@param: 0.0013911ms / 2 = 0.00069555ms, 1%
+hip::hip_allocate_memory: 0.0009868ms / 1 = 0.0009868ms, 1%
+check_context::migraphx::gpu::context: 0.00092602ms / 1 = 0.00092602ms, 1%
+
+Batch size: 16
+Rate: 1641.01 inferences/sec
+Total time: 9.75011ms
+Total instructions time: 11.5631ms
+Overhead time: 0.0857177ms, -1.81297ms
+Overhead: 1%, -19%
+[ MIGraphX Version: 2.10.0.f513f2519 ] Complete: /src/AMDMIGraphX/build/bin/driver perf --fill1 input_ids --input-dim @input_ids 16 384 --batch 16 --gpu /new-saved-models/distilgpt2/distilgpt2_1_fp16_gpu.onnx
